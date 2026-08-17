@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phigros 计算工具</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container {
+    background: #16213e;
+    border-radius: 16px;
+    padding: 30px;
+    width: 420px;
+    max-width: 100%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #e94560;
+    font-size: 1.6em;
+  }
+  .menu {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .menu button {
+    background: #0f3460;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .menu button:hover { background: #533483; }
+  .menu button.exit { background: #e94560; }
+  .menu button.exit:hover { background: #c73652; }
+
+  .module {
+    display: none;
+    background: #0f3460;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 10px;
+  }
+  .module.active { display: block; }
+
+  label {
+    display: block;
+    margin: 10px 0 4px;
+    font-weight: 500;
+  }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #1a1a2e;
+    color: #eee;
+    font-size: 1em;
+    outline: none;
+  }
+  input:focus { border-color: #e94560; }
+
+  .btn-calc {
+    background: #e94560;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    margin-top: 15px;
+    width: 100%;
+  }
+  .btn-calc:hover { background: #d63851; }
+
+  .result {
+    background: #1a1a2e;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+    white-space: pre-wrap;
+    font-family: monospace;
+    line-height: 1.6;
+    min-height: 60px;
+  }
+  .back-btn {
+    background: #533483;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-size: 0.9em;
+  }
+  .back-btn:hover { background: #6a4c9c; }
+
+  .error { color: #ff6b6b; }
+  .success { color: #51cf66; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎵 Phigros 计算工具</h1>
+  <div class="menu" id="menu">
+    <button onclick="showModule('m1')">1. 占比计算</button>
+    <button onclick="showModule('m2')">2. 成绩计算</button>
+    <button onclick="showModule('m3')">3. 单曲RKS</button>
+    <button onclick="showModule('m4')">4. 推分计算</button>
+    <button onclick="showModule('m5')">5. 推分建议</button>
+    <button class="exit" onclick="document.querySelector('.container').innerHTML='<h2 style=\\'text-align:center;margin-top:50px\\'>感谢使用，再见！</h2>'">退出</button>
+  </div>
+
+  <!-- 模块1 -->
+  <div class="module" id="m1">
+    <label>总物量</label>
+    <input type="number" id="m1_total" min="1" step="1">
+    <button class="btn-calc" onclick="calcM1()">计算</button>
+    <div class="result" id="m1_result"></div>
+    <button class="back-btn" onclick="hideAll()">← 返回菜单</button>
+  </div>
+
+  <!-- 模块2 -->
+  <div class="module" id="m2">
+    <label>总物量</label>
+    <input type="number" id="m2_total" min="1" step="1">
+    <label>Perfect 数量</label>
+    <input type="number" id="m2_perfect" min="0" step="1">
+    <label>Good 数量</label>
+    <input type="number" id="m2_good" min="0" step="1">
+    <label>Combo 数量</label>
+    <input type="number" id="m2_combo" min="0" step="1">
+    <button class="btn-calc" onclick="calcM2()">计算</button>
+    <div class="result" id="m2_result"></div>
+    <button class="back-btn" onclick="hideAll()">← 返回菜单</button>
+  </div>
+
+  <!-- 模块3 -->
+  <div class="module" id="m3">
+    <label>谱面定数</label>
+    <input type="number" id="m3_const" min="0" step="any">
+    <label>ACC (%)</label>
+    <input type="number" id="m3_acc" min="0" max="100" step="any">
+    <button class="btn-calc" onclick="calcM3()">计算</button>
+    <div class="result" id="m3_result"></div>
+    <button class="back-btn" onclick="hideAll()">← 返回菜单</button>
+  </div>
+
+  <!-- 模块4 -->
+  <div class="module" id="m4">
+    <label>谱面定数</label>
+    <input type="number" id="m4_const" min="0" step="any">
+    <label>推分前 ACC (%)</label>
+    <input type="number" id="m4_acc_before" min="0" max="100" step="any">
+    <label>推分后 ACC (%)</label>
+    <input type="number" id="m4_acc_after" min="0" max="100" step="any">
+    <label>B27 地板 RKS (未满填0)</label>
+    <input type="number" id="m4_floor" min="0" step="any">
+    <label>P3 定数 (P位未满填0)</label>
+    <input type="number" id="m4_p3" min="0" step="any">
+    <button class="btn-calc" onclick="calcM4()">计算</button>
+    <div class="result" id="m4_result"></div>
+    <button class="back-btn" onclick="hideAll()">← 返回菜单</button>
+  </div>
+
+  <!-- 模块5 -->
+  <div class="module" id="m5">
+    <label>天花板 B1 RKS</label>
+    <input type="number" id="m5_b1" min="0" step="any">
+    <label>地板 B27 RKS</label>
+    <input type="number" id="m5_floor" min="0" step="any">
+    <button class="btn-calc" onclick="initM5()">确定区间</button>
+    <div id="m5_sub" style="display:none;">
+      <label>推荐定数区间: <span id="m5_range"></span></label>
+      <label>选定定数</label>
+      <input type="number" id="m5_const" min="0" step="any">
+      <label>当前 ACC (%)</label>
+      <input type="number" id="m5_acc" min="0" max="100" step="any">
+      <button class="btn-calc" onclick="calcM5()">计算</button>
+      <div class="result" id="m5_result"></div>
+      <button class="back-btn" onclick="resetM5(); hideAll()">← 返回菜单</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ----- 通用函数 -----
+function hideAll() {
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+}
+function showModule(id) {
+  hideAll();
+  document.getElementById(id).classList.add('active');
+}
+
+function rksFromAcc(acc, c) {
+  if (acc < 70 || c <= 0) return 0;
+  return Math.pow((acc - 55) / 45, 2) * c;
+}
+function accFromRks(targetRks, c) {
+  if (targetRks <= 0 || c <= 0) return null;
+  let ratio = targetRks / c;
+  if (ratio < 0) return null;
+  return Math.min(55 + 45 * Math.sqrt(ratio), 100);
+}
+function ceilTo1(v) {
+  return Math.ceil(v * 10) / 10;
+}
+
+// ----- 模块1 -----
+function calcM1() {
+  let total = parseInt(document.getElementById('m1_total').value);
+  if (!total || total <= 0) { document.getElementById('m1_result').textContent = '总物量必须为正整数'; return; }
+  let pp = 900000 / total;
+  let pg = pp * 0.65;
+  let pc = 100000 / total;
+  let accP = 100 / total;
+  let accG = accP * 0.65;
+  document.getElementById('m1_result').textContent =
+    `Perfect: ${Math.round(pp)}\nGood:    ${Math.round(pg)}\nCombo:   ${Math.round(pc)}\nACC(P):  ${accP.toFixed(2)}%\nACC(G):  ${accG.toFixed(2)}%`;
+}
+
+// ----- 模块2 -----
+function calcM2() {
+  let total = parseInt(document.getElementById('m2_total').value);
+  let perf = parseInt(document.getElementById('m2_perfect').value) || 0;
+  let good = parseInt(document.getElementById('m2_good').value) || 0;
+  let combo = parseInt(document.getElementById('m2_combo').value) || 0;
+  if (!total || total <= 0) { document.getElementById('m2_result').textContent = '总物量必须为正整数'; return; }
+  if (perf + good > total) { document.getElementById('m2_result').textContent = 'Perfect+Good不能超过总物量'; return; }
+  if (combo > perf + good) { document.getElementById('m2_result').textContent = 'Combo不能超过有效Note数'; return; }
+
+  let pp = 900000 / total;
+  let pg = pp * 0.65;
+  let pc = 100000 / total;
+  let accP = 100 / total;
+  let accG = accP * 0.65;
+
+  let score = Math.round(perf * pp + good * pg + combo * pc);
+  let accTotal = perf * accP + good * accG;
+
+  let rank;
+  if (perf === total) rank = 'AP';
+  else if (combo === total && good !== 0) rank = 'FC';
+  else if (score >= 1000000) rank = 'AP';
+  else if (score >= 960000) rank = 'V';
+  else if (score >= 920000) rank = 'S';
+  else if (score >= 880000) rank = 'A';
+  else if (score >= 820000) rank = 'B';
+  else if (score >= 700000) rank = 'C';
+  else rank = 'F';
+
+  document.getElementById('m2_result').textContent =
+    `分数: ${score}\n等级: ${rank}\nACC:  ${accTotal.toFixed(2)}%`;
+}
+
+// ----- 模块3 -----
+function calcM3() {
+  let c = parseFloat(document.getElementById('m3_const').value);
+  let acc = parseFloat(document.getElementById('m3_acc').value);
+  if (isNaN(c) || c < 0) { document.getElementById('m3_result').textContent = '请输入有效定数'; return; }
+  if (isNaN(acc) || acc < 0 || acc > 100) { document.getElementById('m3_result').textContent = 'ACC应在0~100之间'; return; }
+  let rks = rksFromAcc(acc, c);
+  document.getElementById('m3_result').textContent =
+    `定数:  ${c.toFixed(1)}\nACC:   ${acc.toFixed(2)}%\nRKS:   ${rks.toFixed(2)}`;
+}
+
+// ----- 模块4 -----
+function calcM4() {
+  let c = parseFloat(document.getElementById('m4_const').value);
+  let accBefore = parseFloat(document.getElementById('m4_acc_before').value);
+  let accAfter = parseFloat(document.getElementById('m4_acc_after').value);
+  let floor = parseFloat(document.getElementById('m4_floor').value) || 0;
+  let p3 = parseFloat(document.getElementById('m4_p3').value) || 0;
+
+  if (isNaN(c) || c < 0) { document.getElementById('m4_result').textContent = '定数无效'; return; }
+  if (isNaN(accBefore) || isNaN(accAfter)) { document.getElementById('m4_result').textContent = 'ACC无效'; return; }
+
+  let rksBefore = rksFromAcc(accBefore, c);
+  let rksAfter = rksFromAcc(accAfter, c);
+
+  if (Math.abs(rksAfter - rksBefore) < 1e-9) {
+    let msg = '推分前后无变化，总RKS提升: +0.00';
+    if (accBefore >= 100 && accAfter >= 100) msg += '\n（已经是AP，无需推分）';
+    document.getElementById('m4_result').textContent = msg;
+    return;
+  }
+
+  // B位
+  let bMode, bGain;
+  if (floor === 0) {
+    bMode = '补入空缺位';
+    bGain = rksAfter;
+  } else {
+    if (rksBefore >= floor) {
+      bMode = '替换B30已有曲目';
+      bGain = rksAfter - rksBefore;
+    } else {
+      if (rksAfter > floor) {
+        bMode = '挤掉地板(B27)';
+        bGain = rksAfter - floor;
+      } else {
+        bMode = '未挤入B位';
+        bGain = 0;
+      }
+    }
+  }
+
+  // P位
+  let pGain = 0, pMode = '';
+  if (accAfter >= 100 && accBefore < 100) {
+    if (p3 === 0) {
+      pMode = '补入P位';
+      pGain = c;
+    } else {
+      if (c > p3) {
+        pMode = '挤入P位';
+        pGain = c - p3;
+      } else {
+        pMode = '未挤入P位';
+        pGain = 0;
+      }
+    }
+  }
+
+  let totalGain = (bGain + pGain) / 30;
+
+  let lines = [];
+  lines.push(`模式:       ${bMode}`);
+  lines.push(`定数:       ${c.toFixed(1)}`);
+  lines.push(`旧ACC:      ${accBefore.toFixed(2)}%`);
+  lines.push(`新ACC:      ${accAfter.toFixed(2)}%`);
+  lines.push(`旧单曲RKS:  ${rksBefore.toFixed(2)}`);
+  lines.push(`新单曲RKS:  ${rksAfter.toFixed(2)}`);
+  if (accAfter >= 100 && accBefore < 100) {
+    lines.push(`AP判定:     是(ACC=100%)`);
+    lines.push(`P位状态:    ${pMode}`);
+    if (pGain !== 0) lines.push(`P位收益:    +${pGain.toFixed(2)}`);
+  }
+  lines.push(`单曲RKS变化:${(rksAfter - rksBefore).toFixed(2)}`);
+  lines.push(`B位收益:    ${bGain >= 0 ? '+' : ''}${bGain.toFixed(2)}`);
+  lines.push(`总RKS提升:  ${totalGain >= 0 ? '+' : ''}${totalGain.toFixed(2)}`);
+  document.getElementById('m4_result').textContent = lines.join('\n');
+}
+
+// ----- 模块5 -----
+let m5_b1, m5_floor, m5_a, m5_b;
+function initM5() {
+  let b1 = parseFloat(document.getElementById('m5_b1').value);
+  let floor = parseFloat(document.getElementById('m5_floor').value);
+  if (isNaN(b1) || isNaN(floor)) { alert('请输入有效数值'); return; }
+  if (b1 < floor) { alert('不合理哦~ 天花板不能低于地板'); return; }
+  m5_b1 = b1; m5_floor = floor;
+  m5_a = ceilTo1(floor + 0.30);
+  m5_b = ceilTo1((b1 + floor) / 2 + 0.5);
+  document.getElementById('m5_range').textContent = `[${m5_a.toFixed(1)}, ${m5_b.toFixed(1)}]`;
+  document.getElementById('m5_sub').style.display = 'block';
+  document.getElementById('m5_result').textContent = '';
+}
+function resetM5() {
+  document.getElementById('m5_sub').style.display = 'none';
+}
+function calcM5() {
+  let constVal = parseFloat(document.getElementById('m5_const').value);
+  let accNow = parseFloat(document.getElementById('m5_acc').value);
+  if (isNaN(constVal) || constVal < 0) { document.getElementById('m5_result').textContent = '定数无效'; return; }
+  if (isNaN(accNow) || accNow < 0 || accNow > 100) { document.getElementById('m5_result').textContent = 'ACC无效'; return; }
+  if (accNow < 70) { document.getElementById('m5_result').textContent = '当前ACC低于70%，RKS为0，无法计算有效推分建议。'; return; }
+
+  constVal = ceilTo1(constVal);
+  let curRks = rksFromAcc(accNow, constVal);
+  let maxRks = rksFromAcc(100, constVal);
+  let inside = constVal >= m5_a;
+  let aboveUpper = constVal > m5_b;
+
+  let innerMsg, outerMsg;
+
+  if (accNow >= 100) {
+    innerMsg = '已满分，无法推分哦';
+    outerMsg = '已满分，无法推分哦';
+  } else {
+    // B30内
+    if (m5_floor > 0 && curRks < m5_floor) {
+      innerMsg = '该曲目不在B30中，无法计算B30内提升';
+    } else {
+      let targetInner = curRks + 0.30;
+      let accInner = accFromRks(targetInner, constVal);
+      if (inside) {
+        if (accInner !== null && accInner <= 100) {
+          innerMsg = `目标ACC: ${accInner.toFixed(2)}%\n需提升: +${(accInner - accNow).toFixed(2)}%`;
+        } else {
+          innerMsg = `当前ACC: ${accNow.toFixed(2)}%\n最大ACC: 100.00%\n实际提升RKS: ${(maxRks - curRks).toFixed(4)}`;
+        }
+      } else {
+        let actualInner = maxRks - curRks;
+        let totalInner = actualInner / 30;
+        if (constVal > m5_floor) {
+          if (totalInner >= 0.0001) {
+            innerMsg = `除非你的P位较低，不然不建议推分哦~\n(预计总RKS提升: ${totalInner.toFixed(4)})`;
+          } else {
+            innerMsg = '除非你P位较低，不然无法推分哦';
+          }
+        } else {
+          innerMsg = '除非你P位较低，不然无法推分哦';
+        }
+      }
+    }
+
+    // B30外
+    let targetOuter = m5_floor + 0.30;
+    let accOuter = accFromRks(targetOuter, constVal);
+    if (inside) {
+      if (accOuter !== null && accOuter <= 100) {
+        outerMsg = `目标ACC: ${accOuter.toFixed(2)}%\n需提升: +${(accOuter - accNow).toFixed(2)}%`;
+      } else {
+        outerMsg = `当前ACC: ${accNow.toFixed(2)}%\n最大ACC: 100.00%\n实际提升RKS: ${(maxRks - m5_floor).toFixed(4)}`;
+      }
+    } else {
+      let actualOuter = maxRks - m5_floor;
+      let totalOuter = actualOuter / 30;
+      if (constVal > m5_floor) {
+        if (totalOuter >= 0.0001) {
+          outerMsg = `除非你的P位较低，不然不建议推分哦~\n(预计总RKS提升: ${totalOuter.toFixed(4)})`;
+        } else {
+          outerMsg = '除非你P位较低，不然无法推分哦';
+        }
+      } else {
+        outerMsg = '除非你P位较低，不然无法推分哦';
+      }
+    }
+  }
+
+  let result = `--- 在B30内（替换旧成绩） ---\n${innerMsg}\n\n--- 在B30外（挤入地板） ---\n${outerMsg}`;
+  if (aboveUpper) result += '\n\n⚠️ 这个定数确实加的很多，但一定不要越级呀！';
+  document.getElementById('m5_result').textContent = result;
+}
+</script>
+</body>
+</html>
